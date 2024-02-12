@@ -1,81 +1,68 @@
 <script setup>
-  import { ref } from 'vue';
-  import axios from 'axios';
-  import { useFormStore } from './store/formStore';
-  import { onMounted } from 'vue';
+import { ref, watch } from 'vue';
+import axios from 'axios';
+import { useFormStore } from '@/stores/formStore';
+import { onMounted } from 'vue';
 
-  const store = useFormStore();
+const store = useFormStore();
+const submissionMessage = ref('');
+const nameError = ref("");
+const emailError = ref("");
+const messageError = ref("");
+const terms = ref(true); // Assuming terms are pre-accepted and not managed by the store
 
-  // Reactive state for form fields and error/success messages
-  const name = ref("");
-  const nameError = ref("");
-  const email = ref("");
-  const emailError = ref("");
-  const message = ref("");
-  const messageError = ref("");
-  const terms = ref(true);
-  const submissionMessage = ref('');
+// Email validation regex
+const emailRegex = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[?)[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}]?|(([\w-]+\.)+[a-zA-Z]{2,}))$/);
 
-  // Email validation regex
-  const emailRegex = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[?)[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}]?|(([\w-]+\.)+[a-zA-Z]{2,}))$/);
+// Load and save form data from/to localStorage
+onMounted(() => {
+  store.loadForm();
+});
 
-  // Load form data when component mounts
-  onMounted(() => {
-    store.loadForm();
-  });
+// Watch store properties to save form data changes
+watch(() => [store.name, store.email, store.message], () => {
+  store.saveForm();
+}, { deep: true });
 
-  // Validation logic before form submission
-  function validateForm() {
-    let isValid = true;
-    nameError.value = '';
-    emailError.value = '';
-    messageError.value = '';
+function validateForm() {
+  let isValid = true;
+  nameError.value = '';
+  emailError.value = '';
+  messageError.value = '';
 
-    if (name.value.length < 2) {
+  if (store.name.length < 2) {
     nameError.value = 'Name must be at least 2 characters long.';
     isValid = false;
   }
-    if (!emailRegex.test(email.value)) {
+  if (!emailRegex.test(store.email)) {
     emailError.value = 'Email must be valid.';
     isValid = false;
   }
-    if (message.value.length < 10) {
+  if (store.message.length < 10) {
     messageError.value = 'Message must be at least 10 characters long.';
     isValid = false;
   }
 
-    return isValid;
+  return isValid;
+}
+
+async function submitForm() {
+  if (!validateForm()) {
+    return;
   }
 
-  // Form submission logic
-  async function submitForm() {
-    if (!validateForm()) {
-      // Validation failed, do not proceed with form submission
-      return;
-    }
-
-    try {
-      // db.json endpoint for submissions
-      const response = await axios.post('http://localhost:3000/submissions', {
-        name: name.value,
-        email: email.value,
-        message: message.value,
-      });
-      // Handle the successful submission response
-      submissionMessage.value = 'Message submitted successfully!';
-
-      // Reset form fields and errors after successful submission
-      name.value = '';
-      email.value = '';
-      message.value = '';
-      nameError.value = '';
-      emailError.value = '';
-      messageError.value = '';
-    } catch (error) {
-      // Handle errors, such as network issues or server errors
-      submissionMessage.value = 'Failed to submit message.';
-    }
+  try {
+    await axios.post('http://localhost:3000/submissions', {
+      name: store.name,
+      email: store.email,
+      message: store.message,
+    });
+    submissionMessage.value = 'Message submitted successfully!';
+    store.clearForm();
+  } catch (error) {
+    submissionMessage.value = 'Failed to submit message.';
   }
+}
 </script>
 
 
@@ -83,15 +70,15 @@
 <template>
   <form class="contact-form" @submit.prevent="submitForm">
     <label>Name:</label>
-    <input v-model="name" required>
+    <input v-model="store.name" required>
     <div v-if="nameError" class="error-message">{{ nameError }}</div>
 
     <label>Email:</label>
-    <input v-model="email" type="email" required>
+    <input v-model="store.email" type="email" required>
     <div v-if="emailError" class="error-message">{{ emailError }}</div>
 
     <label>Message:</label>
-    <textarea v-model="message" required></textarea>
+    <textarea v-model="store.message" required></textarea>
     <div v-if="messageError" class="error-message">{{ messageError }}</div>
 
     <div class="terms">
@@ -101,7 +88,8 @@
 
     <div class="submit">
       <button type="submit" class="button">Submit</button>
-      <div v-if="submissionMessage" class="submission-message">{{ submissionMessage }}</div>    </div>
+      <div v-if="submissionMessage" class="submission-message">{{ submissionMessage }}</div>
+    </div>
   </form>
 </template>
 
