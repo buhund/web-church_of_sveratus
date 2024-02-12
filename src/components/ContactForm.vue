@@ -1,136 +1,107 @@
-<script setup lang="ts">
-import { ref, defineEmits, computed, onMounted, watch } from 'vue';
+<script setup>
+  import { ref } from 'vue';
+  import axios from 'axios';
+  import { useFormStore } from './store/formStore';
+  import { onMounted } from 'vue';
 
+  const store = useFormStore();
 
-const name = ref('');
-const email = ref('');
-const message = ref('');
-const submissionStatus = ref('');
+  // Reactive state for form fields and error/success messages
+  const name = ref("");
+  const nameError = ref("");
+  const email = ref("");
+  const emailError = ref("");
+  const message = ref("");
+  const messageError = ref("");
+  const terms = ref(true);
+  const submissionMessage = ref('');
 
-const nameInvalid = ref(false);
-const emailInvalid = ref(false);
-const messageInvalid = ref(false);
+  // Email validation regex
+  const emailRegex = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[?)[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}]?|(([\w-]+\.)+[a-zA-Z]{2,}))$/);
 
-const emit = defineEmits(["message-submitted"]);
+  // Load form data when component mounts
+  onMounted(() => {
+    store.loadForm();
+  });
 
-onMounted(() => {
-  name.value = localStorage.getItem("name") || "";
-  email.value = localStorage.getItem("email") || "";
-  message.value = localStorage.getItem("message") || "";
-});
+  // Validation logic before form submission
+  function validateForm() {
+    let isValid = true;
+    nameError.value = '';
+    emailError.value = '';
+    messageError.value = '';
 
-watch(name, (newValue) => {
-  localStorage.setItem('name', newValue);
-});
-
-watch(email, (newValue) => {
-  localStorage.setItem('email', newValue);
-});
-
-watch(message, (newValue) => {
-  localStorage.setItem('message', newValue);
-});
-
-const isFormValid = computed(() => {
-  return name.value.trim() && email.value.trim() && message.value.trim();
-});
-
-
-/*
-Basic onSubmit method
- */
-/*
-const onSubmit = () => {
-  nameInvalid.value = !name.value;
-  emailInvalid.value = !email.value;
-  messageInvalid.value = !message.value;
-
-  // if (name.value === "" || email.value === "" || message.value === "") {
-  if (nameInvalid.value || emailInvalid.value || messageInvalid.value) {
-    alert("Please fill out every field");
-    return
+    if (name.value.length < 2) {
+    nameError.value = 'Name must be at least 2 characters long.';
+    isValid = false;
+  }
+    if (!emailRegex.test(email.value)) {
+    emailError.value = 'Email must be valid.';
+    isValid = false;
+  }
+    if (message.value.length < 10) {
+    messageError.value = 'Message must be at least 10 characters long.';
+    isValid = false;
   }
 
-
-  const contactMessage = {
-    name: name.value,
-    email: email.value,
-    message: message.value,
-  };
-
-  emit("message-submitted", contactMessage);
-
-  // Reset form field
-  name.value = "";
-  email.value = "";
-  message.value = "";
-  nameInvalid.value = false;
-  emailInvalid.value = false;
-  messageInvalid.value = false;
-}
-*/
-
-/*
-Fancy onSubmit with JSON server and shiznitz
- */
-const onSubmit = async () => {
-  if (!name.value || !email.value || !message.value) {
-    alert("Please fill out every field");
-    return
+    return isValid;
   }
 
-  const contactMessage = {
-    name: name.value,
-    email: email.value,
-    message: message.value,
-  };
+  // Form submission logic
+  async function submitForm() {
+    if (!validateForm()) {
+      // Validation failed, do not proceed with form submission
+      return;
+    }
 
-  try {
-    const response = await fetch('http://localhost:3000/submissions',{
-      method: 'POST',
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    try {
+      // db.json endpoint for submissions
+      const response = await axios.post('http://localhost:3000/submissions', {
         name: name.value,
         email: email.value,
         message: message.value,
-      }),
-    });
+      });
+      // Handle the successful submission response
+      submissionMessage.value = 'Message submitted successfully!';
 
-    if (response.ok) {
-      //Success: Reset form field.
-      name.value = "";
-      email.value = "";
-      message.value = "";
-      submissionStatus.value = "Message submitted to the Angelis."
-    } else {
-      // Handle errors, without resetting form.
-      submissionStatus.value = "Submission of message failed."
+      // Reset form fields and errors after successful submission
+      name.value = '';
+      email.value = '';
+      message.value = '';
+      nameError.value = '';
+      emailError.value = '';
+      messageError.value = '';
+    } catch (error) {
+      // Handle errors, such as network issues or server errors
+      submissionMessage.value = 'Failed to submit message.';
     }
-    // Catch errors, without resetting form.
-  } catch (error) {
-    submissionStatus.value = "An error occurred."
   }
-};
 </script>
 
 
+
 <template>
-  <form class="contact-form" @submit.prevent="onSubmit">
-    <h3>Formi Contactus</h3>
+  <form class="contact-form" @submit.prevent="submitForm">
+    <label>Name:</label>
+    <input v-model="name" required>
+    <div v-if="nameError" class="error-message">{{ nameError }}</div>
 
-    <label for="name">Name:</label>
-    <input id="name" v-model="name" :class="{'input-invalid': nameInvalid}" placeholder="Your Name">
+    <label>Email:</label>
+    <input v-model="email" type="email" required>
+    <div v-if="emailError" class="error-message">{{ emailError }}</div>
 
-    <label for="email">E-mail:</label>
-    <input id="email" type="email" v-model="email" :class="{'input-invalid': emailInvalid}" placeholder="Your E-mail">
+    <label>Message:</label>
+    <textarea v-model="message" required></textarea>
+    <div v-if="messageError" class="error-message">{{ messageError }}</div>
 
-    <label for="message">Message:</label>
-    <textarea id="message" v-model="message" :class="{'input-invalid': messageInvalid}" placeholder="Write your message here"></textarea>
+    <div class="terms">
+      <input type="checkbox" v-model="terms" disabled>
+      <label>Accept terms and conditions</label>
+    </div>
 
-    <input class="button" type="submit" value="Submit" :disabled="!isFormValid">
-    <div v-if="submissionStatus">{{ submissionStatus }}</div>
+    <div class="submit">
+      <button type="submit" class="button">Submit</button>
+      <div v-if="submissionMessage" class="submission-message">{{ submissionMessage }}</div>    </div>
   </form>
 </template>
 
@@ -140,21 +111,35 @@ const onSubmit = async () => {
   border: 2px solid red;
 }
 
+.error-message {
+  color: red;
+  margin-top: 4px;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+input[type="checkbox"] {
+  display: inline-block;
+  width: 16px;
+  margin: 0 10px 0 0;
+  position: relative;
+  top: 2px;
+}
+
+
 .contact-form {
   width: 100%;
   max-height: 90vh;
   min-height: 30vh;
-  max-width: 40vw;
-  min-width: 25vw;
+  max-width: 30vw;
+  min-width: 20vw;
+  border-radius: 10px;
 
   overflow-y: auto;
 
-  padding: 20px;
-  /*
-  padding-top: 8px;
-  padding-left: 8px;
-  padding-right: 8px;
-  */
+  padding: 40px;
+  margin: 30px auto;
+
   display: flex;
   flex-direction: column;
   align-content: flex-start;
@@ -175,12 +160,16 @@ const onSubmit = async () => {
 }
 
 .button {
-  margin-top: 12px;
-  height: 60px;
-  width: 160px;
-  align-content: center;
+  border: 0;
+  padding: 10px 20px;
+  margin-top: 20px;
+  color: white;
+  border-radius: 20px;
   background-color: rgba(50,176,214,0.68);
-  font-weight: bold;
+}
+
+.submit {
+  text-align: center;
 }
 
 .button:hover {

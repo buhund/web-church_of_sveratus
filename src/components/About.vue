@@ -1,5 +1,5 @@
 <template>
-  <div class="contact-container">
+  <div class="about-container">
     <div class="about">
       <div>
       <h1 class="h1-title">Dost Thou Stray?</h1>
@@ -56,7 +56,7 @@
   color: black;
 }
 
-.contact-container {
+.about-container {
   width: 100%;
   max-height: 98vh;
   overflow-y: auto;
@@ -86,4 +86,5 @@
 
 
 <script setup lang="ts">
+
 </script>

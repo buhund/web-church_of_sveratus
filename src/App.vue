@@ -38,6 +38,17 @@ import Header from "@/components/Header.vue";
 
 <style scoped>
 
+body, html {
+  height: 100%;
+  margin: 0;
+}
+
+.body-background {
+  background-image: url('/src/assets/your-background-image.jpg');
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+}
 
 .container {
   width: 100%;
