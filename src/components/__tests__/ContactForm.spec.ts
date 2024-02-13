@@ -42,7 +42,8 @@ describe('ContactForm.vue', () => {
 
     // Assertions to verify that data was loaded from localStorage
     const store = useFormStore();
-    // Since default mock returns null, these should be empty
+
+    // Default mock returns null --> these should be empty
     expect(store.name).toBe('');
     expect(store.email).toBe('');
     expect(store.message).toBe('');
@@ -55,11 +56,10 @@ describe('ContactForm.vue', () => {
       },
     });
 
-    // Provide input values that will trigger validation errors
-    await wrapper.find('[data-testid="nameField"]').setValue('H');
-    await wrapper.find('[data-testid="emailField"]').setValue('herp');
+    // Input values which will trigger validation errors
+    await wrapper.find('[data-testid="nameField"]').setValue('O');
+    await wrapper.find('[data-testid="emailField"]').setValue('tideman');
     await wrapper.find('[data-testid="messageField"]').setValue('less10');
-
 
     // Trigger form submission
     await wrapper.find('form').trigger('submit.prevent');
@@ -77,19 +77,18 @@ describe('ContactForm.vue', () => {
       },
     });
 
-    // Set valid data for the form and trigger form submission
-    await wrapper.find('[data-testid="nameField"]').setValue('Herp MacDerp');
-    await wrapper.find('[data-testid="emailField"]').setValue('herp@derp.com');
-    await wrapper.find('[data-testid="messageField"]').setValue('This message is more than 10 characters long.');
+    await wrapper.find('[data-testid="nameField"]').setValue('Optimus Prime');
+    await wrapper.find('[data-testid="emailField"]').setValue('optimus@cybertron.com');
+    await wrapper.find('[data-testid="messageField"]').setValue('This is more than 10 characters.');
     await wrapper.find('form').trigger('submit.prevent');
 
     await nextTick();
 
     // Assert that axios.post was called correctly
     expect(axios.post).toHaveBeenCalledWith('http://localhost:3000/submissions', {
-      name: 'Herp MacDerp',
-      email: 'herp@derp.com',
-      message: 'This message is more than 10 characters long.',
+      name: 'Optimus Prime',
+      email: 'optimus@cybertron.com',
+      message: 'This is more than 10 characters.',
     });
 
     // Check for success message

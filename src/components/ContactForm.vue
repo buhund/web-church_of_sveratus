@@ -29,7 +29,7 @@ function validateForm() {
   nameError.value = '';
   emailError.value = '';
   messageError.value = '';
-  submissionMessage.value = "";
+  submissionMessage.value = '';
 
 
   if (store.name.length < 2) {
@@ -73,15 +73,15 @@ async function submitForm() {
   <form class="contact-form" @submit.prevent="submitForm" novalidate>
     <label>Name:</label>
     <input v-model="store.name" type="text" data-testid="nameField" required>
-    <div v-if="nameError" class="error-message">{{ nameError }}</div>
+    <div v-if="nameError" class="error-message" data-testid="nameErrorLabel">{{ nameError }}</div>
 
     <label>Email:</label>
     <input v-model="store.email" type="email" data-testid="emailField" required>
-    <div v-if="emailError" class="error-message">{{ emailError }}</div>
+    <div v-if="emailError" class="error-message" data-testid="emailErrorLabel">{{ emailError }}</div>
 
     <label>Message:</label>
     <textarea v-model="store.message" data-testid="messageField" required></textarea>
-    <div v-if="messageError" class="error-message" >{{ messageError }}</div>
+    <div v-if="messageError" class="error-message" data-testid="messageErrorLabel" >{{ messageError }}</div>
 
     <div class="terms">
       <input type="checkbox" v-model="terms" disabled>
@@ -162,6 +162,7 @@ input[type="checkbox"] {
   text-align: center;
 }
 
+/*
 .button:not(:disabled):hover {
   background-color: rgba(214,161,0,0.68);
 }
@@ -169,5 +170,6 @@ input[type="checkbox"] {
 .button:not(:disabled):active {
   background-color: rgba(176, 132, 0, 0.68);
 }
+*/
 
 </style>
