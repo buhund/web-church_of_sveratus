@@ -1,3 +1,6 @@
+/**
+ * Unit Test, Vitest
+ */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';

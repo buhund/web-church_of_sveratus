@@ -29,6 +29,8 @@ function validateForm() {
   nameError.value = '';
   emailError.value = '';
   messageError.value = '';
+  submissionMessage.value = "";
+
 
   if (store.name.length < 2) {
     nameError.value = 'Name must be at least 2 characters long.';
@@ -160,12 +162,12 @@ input[type="checkbox"] {
   text-align: center;
 }
 
-.button:hover {
+.button:not(:disabled):hover {
   background-color: rgba(214,161,0,0.68);
 }
 
-.button:active {
-  background-color: rgba(176,132,0,0.68);
+.button:not(:disabled):active {
+  background-color: rgba(176, 132, 0, 0.68);
 }
 
 </style>

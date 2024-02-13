@@ -1,4 +1,8 @@
-import { describe, it, expect } from "vitest";;
+/**
+ * Unit Test, Vitest
+ */
+
+import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import Calculator from "@/components/Calculator.vue";
 
