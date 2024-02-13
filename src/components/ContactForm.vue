@@ -57,7 +57,7 @@ async function submitForm() {
       email: store.email,
       message: store.message,
     });
-    submissionMessage.value = 'Message submitted successfully!';
+    submissionMessage.value = 'Message submitted successfully!'; // Confirm this line exists
     store.clearForm();
   } catch (error) {
     submissionMessage.value = 'Failed to submit message.';
@@ -70,16 +70,16 @@ async function submitForm() {
 <template>
   <form class="contact-form" @submit.prevent="submitForm">
     <label>Name:</label>
-    <input v-model="store.name" required>
+    <input v-model="store.name" type="text" data-testid="nameField" required>
     <div v-if="nameError" class="error-message">{{ nameError }}</div>
 
     <label>Email:</label>
-    <input v-model="store.email" type="email" required>
+    <input v-model="store.email" type="email" data-testid="emailField" required>
     <div v-if="emailError" class="error-message">{{ emailError }}</div>
 
     <label>Message:</label>
-    <textarea v-model="store.message" required></textarea>
-    <div v-if="messageError" class="error-message">{{ messageError }}</div>
+    <textarea v-model="store.message" data-testid="messageField" required></textarea>
+    <div v-if="messageError" class="error-message" >{{ messageError }}</div>
 
     <div class="terms">
       <input type="checkbox" v-model="terms" disabled>
@@ -87,8 +87,8 @@ async function submitForm() {
     </div>
 
     <div class="submit">
-      <button type="submit" class="button">Submit</button>
-      <div v-if="submissionMessage" class="submission-message">{{ submissionMessage }}</div>
+      <button type="submit" class="button" data-testid="submitButton">Submit</button>
+      <div v-if="submissionMessage" class="submission-message" data-testid="submitMessage">{{ submissionMessage }}</div>
     </div>
   </form>
 </template>

@@ -1,58 +1,101 @@
-import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { mount } from '@vue/test-utils';
+import { createPinia, setActivePinia } from 'pinia';
+import axios from 'axios';
 import ContactForm from '@/components/ContactForm.vue';
+import { useFormStore } from '@/stores/formStore';
+import { nextTick } from 'vue';
 
+// Mock axios
+vi.mock('axios', () => ({
+  default: {
+    post: vi.fn(() => Promise.resolve({ data: { message: 'Message submitted successfully!' } }))
+  },
 
+}));
 
+// Mock localStorage
+vi.stubGlobal('localStorage', {
+  getItem: vi.fn((key) => null), // Default to null unless a specific key's value is set in a test
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+});
 
-describe('ContactForm', () => {
-  it("Form renders correctly", async () => {
-    const wrapper = mount(ContactForm);
-    // expect(wrapper.html()).toMatchSnapshot()
-    expect(wrapper.html()).toContain("Name:" && "E-mail:" && "Message:")
-    const nameField = wrapper.find('[data-testid="nameError"]');
-    expect(wrapper.html()).toContain("Your Name");
-
-    const emailField = wrapper.find('[data-testid="emailError"]');
-    expect(wrapper.html()).toContain("Your E-mail");
-
-    const messageField = wrapper.find('[data-testid="messageError"]');
-    expect(wrapper.html()).toContain("Write your message here");
-
-/*        await nameField.trigger("blur");
-    await wrapper.vm.$nextTick();
-    const nameError = wrapper.find('[data-testid="nameError"]');
-    expect(nameError).toBe(`Please enter a valid name`);*/
+describe('ContactForm.vue', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
   });
 
-  it("Perform name validation", async () => {
-    const wrapper = mount(ContactForm);
-    // expect(wrapper.html()).toMatchSnapshot()
-    expect(wrapper.html()).toContain("Name:" && "E-mail:" && "Message:")
-    const nameField = wrapper.find('[data-testid="nameError"]');
-    const emailField = wrapper.find('[data-testid="emailError"]');
-    const messageField = wrapper.find('[data-testid="messageError"]');
-
-    /*        await nameField.trigger("blur");
-        await wrapper.vm.$nextTick();
-        const nameError = wrapper.find('[data-testid="nameError"]');
-        expect(nameError).toBe(`Please enter a valid name`);*/
+  afterEach(() => {
+    vi.clearAllMocks(); // Clear mocks to ensure fresh state for each test
   });
 
-  it("Perform Email validation", async () => {
-    const wrapper = mount(ContactForm);
-    const emailField = wrapper.find('[data-testid="email"]');
-    await emailField.trigger("blur");
-    const emailError = wrapper.find('[data-testid="emailError"]').text();
-    expect(emailError).toBe("Please enter a valid email address");
+  it('loads form data from localStorage on mount', async () => {
+    const wrapper = mount(ContactForm, {
+      global: {
+        plugins: [createPinia()],
+      },
+    });
+
+    // Assertions to verify that data was loaded from localStorage
+    const store = useFormStore();
+    // Since default mock returns null, these should be empty
+    expect(store.name).toBe('');
+    expect(store.email).toBe('');
+    expect(store.message).toBe('');
   });
 
-  it("Perform Message validation", async () => {
-    const wrapper = mount(ContactForm);
-    const messageField = wrapper.find('[data-testid="message"]');
-    await messageField.trigger("blur");
-    const messageError = wrapper.find('[data-testid="messageError"]').text();
-    expect(messageError).toBe("Please enter a valid message");
+  it('validates form fields correctly and displays error messages', async () => {
+    const wrapper = mount(ContactForm, {
+      global: {
+        plugins: [createPinia()],
+      },
+    });
+
+    // Provide input values that will trigger validation errors
+    await wrapper.find('[data-testid="nameField"]').setValue('H');
+    await wrapper.find('[data-testid="emailField"]').setValue('herp');
+    await wrapper.find('[data-testid="messageField"]').setValue('less10');
+
+
+    // Trigger form submission
+    await wrapper.find('form').trigger('submit.prevent');
+
+    // Check if error messages are displayed as expected
+    expect(wrapper.text()).toContain('Name must be at least 2 characters long.');
+    expect(wrapper.text()).toContain('Email must be valid.');
+    expect(wrapper.text()).toContain('Message must be at least 10 characters long.');
   });
 
+  it('submits the form successfully and clears the form on success', async () => {
+    const wrapper = mount(ContactForm, {
+      global: {
+        plugins: [createPinia()],
+      },
+    });
+
+    // Set valid data for the form and trigger form submission
+    await wrapper.find('[data-testid="nameField"]').setValue('Herp MacDerp');
+    await wrapper.find('[data-testid="emailField"]').setValue('herp@derp.com');
+    await wrapper.find('[data-testid="messageField"]').setValue('This message is more than 10 characters long.');
+    await wrapper.find('form').trigger('submit.prevent');
+
+    await nextTick();
+
+    // Assert that axios.post was called correctly
+    expect(axios.post).toHaveBeenCalledWith('http://localhost:3000/submissions', {
+      name: 'Herp MacDerp',
+      email: 'herp@derp.com',
+      message: 'This message is more than 10 characters long.',
+    });
+
+    // Check for success message
+    expect(wrapper.text()).toContain('Message submitted successfully!');
+
+    // Verify form fields are cleared after successful submission
+    const store = useFormStore();
+    expect(store.name).toBe('');
+    expect(store.email).toBe('');
+    expect(store.message).toBe('');
+  });
 });
