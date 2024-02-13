@@ -68,7 +68,7 @@ async function submitForm() {
 
 
 <template>
-  <form class="contact-form" @submit.prevent="submitForm">
+  <form class="contact-form" @submit.prevent="submitForm" novalidate>
     <label>Name:</label>
     <input v-model="store.name" type="text" data-testid="nameField" required>
     <div v-if="nameError" class="error-message">{{ nameError }}</div>
